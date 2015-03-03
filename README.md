@@ -6,14 +6,24 @@ Simple utility to extract localization strings from existing standard OS X apps 
 To extract strings from all installed applications in `/Application`
 simply launch like this:
 
-    java -jar extract-localization-${projectversion}.jar
+    java -jar extract-localization-VERSION.jar
 
 
+(replace `VERSION` with a valid value)
 To launch just for some applications, add arguments like this:
 
-    java -jar extract-localization-${projectversion}.jar /Applications/Calendar.app /Applications/Calculator.app
+    java -jar extract-localization-VERSION.jar /Applications/Calendar.app /Applications/Calculator.app
 
+
+(again, replace `VERSION` with a valid value)
+
+The results are placed as `.json` files in a new directory called `localizations`.
+Those files may be used to create new language files for [https://github.com/maremmle/localize-mainmenu](localize-mainmenu).
+
+
+## Requirements
 
 Requires Java 8.
+
 
 Enjoy!
