@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="extract-localization">
+    <skin>
+        <groupId>org.apache.maven.skins</groupId>
+        <artifactId>maven-fluido-skin</artifactId>
+        <version>1.3.1</version>
+    </skin>
+    <custom>
+        <fluidoSkin>
+            <gitHub>
+                <projectId>hendriks73/extract-localization</projectId>
+                <ribbonOrientation>left</ribbonOrientation>
+                <ribbonColor>gray</ribbonColor>
+            </gitHub>
+        </fluidoSkin>
+    </custom>
+    <version position="right"/>
+    <googleAnalyticsAccountId>UA-7561371-2</googleAnalyticsAccountId>
+    <!--
+    <bannerLeft>
+        <name>MFSampledSP</name>
+        <href>http://www.tagtraum.com/extract-localization</href>
+        <src>./images/extract-localization-banner.png</src>
+    </bannerLeft>
+    -->
+    <bannerRight>
+        <href>http://www.tagtraum.com/</href>
+        <src>./images/tagtraum-banner.png</src>
+        <width>90</width>
+        <height>60</height>
+    </bannerRight>
+    <body>
+        <head>
+            <meta name="keyword" content="localization internationalization OSX mac" />
+            <link rel="icon" type="image/x-icon" href="../favicon.ico" />
+        </head>
+        <links>
+            <item name="tagtraum" href="http://www.tagtraum.com/"/>
+        </links>
+
+        <menu name="MFSampledSP">
+            <item name="Introduction" href="index.html"/>
+            <item name="Developer" href="developer.html"/>
+            <item name="Release" href="https://www.beatunes.com/repo/maven2/com/tagtraum/extract-localization/"/>
+            <item name="JavaDocs" href="apidocs/index.html"/>
+        </menu>
+
+        <menu ref="reports"/>
+    </body>
+</project>
