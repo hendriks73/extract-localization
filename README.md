@@ -10,6 +10,7 @@ simply launch like this:
 
 
 (replace `VERSION` with a valid value)
+
 To launch just for some applications, add arguments like this:
 
     java -jar extract-localization-VERSION.jar /Applications/Calendar.app /Applications/Calculator.app
