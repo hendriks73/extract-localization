@@ -18,7 +18,8 @@ To launch just for some applications, add arguments like this:
 (again, replace `VERSION` with a valid value)
 
 The results are placed as `.json` files in a new directory called `localizations`.
-Those files may be used to create new language files for [https://github.com/maremmle/localize-mainmenu](localize-mainmenu).
+Those files may be used as a starting point to create new language files for
+[localize-mainmenu](https://github.com/maremmle/localize-mainmenu).
 
 
 ## Requirements
