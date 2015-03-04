@@ -15,10 +15,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * Main.
@@ -32,6 +29,15 @@ public class Main {
     private final Map<String, Map<String, String>> localizations = new TreeMap<>();
     private final SAXParserFactory saxParserFactory;
     private boolean filter;
+    private static final Map<String, String> LANGUAGE_ALIAS = new HashMap<>();
+    static {
+        LANGUAGE_ALIAS.put("Dutch", "nl");
+        LANGUAGE_ALIAS.put("French", "fr");
+        LANGUAGE_ALIAS.put("German", "de");
+        LANGUAGE_ALIAS.put("Italian", "it");
+        LANGUAGE_ALIAS.put("Japanese", "ja");
+        LANGUAGE_ALIAS.put("Spanish", "es");
+    }
     private static final Map<String, String> FILTER_TEMPLATE = new TreeMap<>();
     static {
         FILTER_TEMPLATE.put("About <AppName>", null);
@@ -193,7 +199,7 @@ public class Main {
         }).forEach(lproj -> {
             try {
                 final String pathName = lproj.getFileName().toString();
-                final String locale = pathName.substring(0, pathName.length() - ".lproj".length());
+                final String locale = resolveLocale(pathName.substring(0, pathName.length() - ".lproj".length()));
                 final Path stringsFile = lproj.resolve(resourceName + ".strings");
                 if (Files.exists(stringsFile)) {
                     final Map<String, String> idToLocalName = extractLocalizedMap(stringsFile);
@@ -212,6 +218,11 @@ public class Main {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    private static String resolveLocale(final String locale) {
+        final String s = LANGUAGE_ALIAS.get(locale);
+        return s == null ? locale : s;
     }
 
     private Map<String, String> mapBaseNamesToLocalNames(final Map<String, String> idToBaseName, final Map<String, String> idToLocalName) {
