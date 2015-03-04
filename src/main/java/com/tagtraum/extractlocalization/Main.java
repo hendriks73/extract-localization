@@ -6,13 +6,17 @@
  */
 package com.tagtraum.extractlocalization;
 
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
@@ -100,7 +104,7 @@ public class Main {
         // setup parser
         saxParserFactory = SAXParserFactory.newInstance();
         saxParserFactory.setNamespaceAware(false);
-        saxParserFactory.setValidating(true);
+        saxParserFactory.setValidating(false);
     }
 
     public boolean isFilter() {
@@ -185,9 +189,7 @@ public class Main {
     }
 
     private void extract(final Path nibFile, final Path resourcesPath, final String resourceName) throws IOException, InterruptedException, ParserConfigurationException, SAXException {
-        // convert nib to plain xml
-        final Path xmlNibFile = toXML(nibFile);
-        final Map<String, String> idToBaseName = extractBaseMap(xmlNibFile);
+        final Map<String, String> idToBaseName = extractBaseMap(nibFile);
 
         // find app name
         final String appName = resourcesPath.getParent().getParent().getFileName().toString().replace(".app", "");
@@ -251,20 +253,29 @@ public class Main {
     private Map<String, String> extractLocalizedMap(final Path stringsFile) throws IOException, InterruptedException, ParserConfigurationException, SAXException {
         final StringExtractor stringExtractor = new StringsStringExtractor();
         final Path xmlStringsFile = toXML(stringsFile);
-        try {
+        try (final Reader r = Files.newBufferedReader(xmlStringsFile,StandardCharsets.UTF_8)) {
             final SAXParser saxParser = saxParserFactory.newSAXParser();
-            saxParser.parse(xmlStringsFile.toFile(), stringExtractor);
+            final InputSource source = new InputSource(new ValidXMLReader(r));
+            source.setSystemId(stringsFile.toString());
+            saxParser.parse(source, stringExtractor);
+        } catch (SAXParseException e) {
+            System.err.println("Error parsing " + stringsFile + ": " + e.toString());
         } finally {
             Files.delete(xmlStringsFile);
         }
         return stringExtractor.getStrings();
     }
 
-    private Map<String, String> extractBaseMap(final Path xmlNibFile) throws ParserConfigurationException, SAXException, IOException {
+    private Map<String, String> extractBaseMap(final Path nibFile) throws ParserConfigurationException, SAXException, IOException, InterruptedException {
         final NibStringExtractor nibStringExtractor = new NibStringExtractor();
-        try {
+        final Path xmlNibFile = toXML(nibFile);
+        try (final Reader r = Files.newBufferedReader(xmlNibFile,StandardCharsets.UTF_8)) {
             final SAXParser saxParser = saxParserFactory.newSAXParser();
-            saxParser.parse(xmlNibFile.toFile(), nibStringExtractor);
+            final InputSource source = new InputSource(new ValidXMLReader(r));
+            source.setSystemId(nibFile.toString());
+            saxParser.parse(source, nibStringExtractor);
+        } catch (SAXParseException e) {
+            System.err.println("Error parsing " + nibFile + ": " + e.toString());
         } finally {
             Files.delete(xmlNibFile);
         }
@@ -272,6 +283,9 @@ public class Main {
     }
 
     private Path toXML(final Path binaryPList) throws IOException, InterruptedException {
+
+        // Perhaps we should switch to JSON as format to avoid XML parsing problems...
+
         final Path xmlPList = Files.createTempFile("xml", ".plist");
         final Process process = Runtime.getRuntime().exec(new String[]{"plutil", "-convert",
                 "xml1", "-s", "-o", xmlPList.toString(), binaryPList.toString()});
