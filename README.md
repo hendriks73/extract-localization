@@ -18,6 +18,10 @@ To launch just for some applications, add arguments like this:
 
 (again, replace `VERSION` with a valid value)
 
+To limit the emitted json files to reflect the values in
+[this template](https://github.com/maremmle/localize-mainmenu/blob/master/languages/_template.json)
+please add the command line flag `-f`.
+
 The results are placed as `.json` files in a new directory called `localizations`.
 Those files may be used as a starting point to create new language files for
 [localize-mainmenu](https://github.com/maremmle/localize-mainmenu).

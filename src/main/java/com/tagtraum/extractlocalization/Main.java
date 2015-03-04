@@ -15,6 +15,8 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -29,6 +31,64 @@ public class Main {
 
     private final Map<String, Map<String, String>> localizations = new TreeMap<>();
     private final SAXParserFactory saxParserFactory;
+    private boolean filter;
+    private static final Map<String, String> FILTER_TEMPLATE = new TreeMap<>();
+    static {
+        FILTER_TEMPLATE.put("About <AppName>", null);
+        FILTER_TEMPLATE.put("Bring <AppName> Window to Front", null);
+        FILTER_TEMPLATE.put("Bring All to Front", null);
+        FILTER_TEMPLATE.put("Capitalize", null);
+        FILTER_TEMPLATE.put("Check Document Now", null);
+        FILTER_TEMPLATE.put("Check Grammar With Spelling", null);
+        FILTER_TEMPLATE.put("Check Spelling While Typing", null);
+        FILTER_TEMPLATE.put("Close", null);
+        FILTER_TEMPLATE.put("Copy", null);
+        FILTER_TEMPLATE.put("Correct Spelling Automatically", null);
+        FILTER_TEMPLATE.put("Cut", null);
+        FILTER_TEMPLATE.put("Delete", null);
+        FILTER_TEMPLATE.put("Edit", null);
+        FILTER_TEMPLATE.put("File", null);
+        FILTER_TEMPLATE.put("Find and Replace…", null);
+        FILTER_TEMPLATE.put("Find Next", null);
+        FILTER_TEMPLATE.put("Find Previous", null);
+        FILTER_TEMPLATE.put("Find", null);
+        FILTER_TEMPLATE.put("Find…", null);
+        FILTER_TEMPLATE.put("Help", null);
+        FILTER_TEMPLATE.put("Hide <AppName>", null);
+        FILTER_TEMPLATE.put("Hide Others", null);
+        FILTER_TEMPLATE.put("Jump to Selection", null);
+        FILTER_TEMPLATE.put("Make Lower Case", null);
+        FILTER_TEMPLATE.put("Make Upper Case", null);
+        FILTER_TEMPLATE.put("Minimize", null);
+        FILTER_TEMPLATE.put("Open…", null);
+        FILTER_TEMPLATE.put("Paste and Match Style", null);
+        FILTER_TEMPLATE.put("Paste", null);
+        FILTER_TEMPLATE.put("Preferences…", null);
+        FILTER_TEMPLATE.put("Quit <AppName>", null);
+        FILTER_TEMPLATE.put("Redo", null);
+        FILTER_TEMPLATE.put("Select All", null);
+        FILTER_TEMPLATE.put("Services", null);
+        FILTER_TEMPLATE.put("Show All", null);
+        FILTER_TEMPLATE.put("Show Spelling and Grammar", null);
+        FILTER_TEMPLATE.put("Show Substitutions", null);
+        FILTER_TEMPLATE.put("Smart Copy/Paste", null);
+        FILTER_TEMPLATE.put("Smart Dashes", null);
+        FILTER_TEMPLATE.put("Smart Links", null);
+        FILTER_TEMPLATE.put("Smart Quotes", null);
+        FILTER_TEMPLATE.put("Speech", null);
+        FILTER_TEMPLATE.put("Spelling and Grammar", null);
+        FILTER_TEMPLATE.put("Spelling", null);
+        FILTER_TEMPLATE.put("Start Speaking", null);
+        FILTER_TEMPLATE.put("Stop Speaking", null);
+        FILTER_TEMPLATE.put("Substitutions", null);
+        FILTER_TEMPLATE.put("Text Replacement", null);
+        FILTER_TEMPLATE.put("Transformations", null);
+        FILTER_TEMPLATE.put("Undo", null);
+        FILTER_TEMPLATE.put("Use Selection for Find", null);
+        FILTER_TEMPLATE.put("Use Selection for Replace", null);
+        FILTER_TEMPLATE.put("Window", null);
+        FILTER_TEMPLATE.put("Zoom",  null);
+    }
 
     public Main() {
         // setup parser
@@ -37,7 +97,15 @@ public class Main {
         saxParserFactory.setValidating(true);
     }
 
-    public void extractFromAppBundles(final String... appBundles) {
+    public boolean isFilter() {
+        return filter;
+    }
+
+    public void setFilter(final boolean filter) {
+        this.filter = filter;
+    }
+
+    public void extractFromAppBundles(final List<String> appBundles) {
         for (final String s: appBundles) {
             try {
                 extract(Paths.get(s));
@@ -73,12 +141,21 @@ public class Main {
                 final Path path = Paths.get("localizations/" + locale + ".json");
                 Files.createDirectories(path.getParent());
                 try (final BufferedWriter writer = Files.newBufferedWriter(path)) {
-                    writer.write(Json.encode(localizations.get(locale)));
+                    final Map<String, String> localMap = filter
+                            ? filter(localizations.get(locale))
+                            : localizations.get(locale);
+                    writer.write(Json.encode(localMap));
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    private Map<String, String> filter(final Map<String, String> map) {
+        final TreeMap<String, String> filtered = new TreeMap<>(FILTER_TEMPLATE);
+        filtered.keySet().stream().filter(map::containsKey).forEach(key -> filtered.put(key, map.get(key)));
+        return filtered;
     }
 
     private void extract(final Path appBundle) throws IOException {
@@ -106,6 +183,9 @@ public class Main {
         final Path xmlNibFile = toXML(nibFile);
         final Map<String, String> idToBaseName = extractBaseMap(xmlNibFile);
 
+        // find app name
+        final String appName = resourcesPath.getParent().getParent().getFileName().toString().replace(".app", "");
+
         // find localizations...
         Files.walk(resourcesPath, 1).filter(path -> {
             final String s = path.toString();
@@ -118,6 +198,12 @@ public class Main {
                 if (Files.exists(stringsFile)) {
                     final Map<String, String> idToLocalName = extractLocalizedMap(stringsFile);
                     final Map<String, String> baseNamesToLocalNames = mapBaseNamesToLocalNames(idToBaseName, idToLocalName);
+                    final String localAppName = baseNamesToLocalNames.get(appName);
+                    if (localAppName != null) {
+                        final Map<String, String> appNamePlaceHolders = new TreeMap<>();
+                        baseNamesToLocalNames.keySet().stream().filter(s -> s.contains(appName) && !s.equals(appName)).forEach(s -> appNamePlaceHolders.put(s.replace(appName, "<AppName>"), baseNamesToLocalNames.get(s).replace(localAppName, "<AppName>")));
+                        baseNamesToLocalNames.putAll(appNamePlaceHolders);
+                    }
                     getLocalMap(locale).putAll(baseNamesToLocalNames);
                 } else {
                     // fail silently, if we don't find any matching strings file
@@ -184,10 +270,15 @@ public class Main {
 
     public static void main(String[] args) throws IOException, InterruptedException, ParserConfigurationException, SAXException {
         final Main main = new Main();
-        if (args.length == 0) {
+        final List<String> argList = new ArrayList<>();
+        for (final String arg : args) {
+            if ("-f".equals(arg)) main.setFilter(true);
+            else argList.add(arg);
+        }
+        if (argList.isEmpty()) {
             main.extractFromApplications();
         } else {
-            main.extractFromAppBundles(args);
+            main.extractFromAppBundles(argList);
         }
         System.out.println("Done.");
     }
