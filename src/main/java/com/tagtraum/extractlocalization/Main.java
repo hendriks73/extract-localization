@@ -148,7 +148,7 @@ public class Main {
     private void writeResults() {
         localizations.keySet().forEach(locale -> {
             try {
-                final Path path = Paths.get("localizations/" + locale + ".json");
+                final Path path = Paths.get("localizations/" + locale.replace('_', '-') + ".json");
                 Files.createDirectories(path.getParent());
                 try (final BufferedWriter writer = Files.newBufferedWriter(path)) {
                     final Map<String, String> localMap = filter

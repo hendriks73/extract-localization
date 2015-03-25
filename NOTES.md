@@ -1,6 +1,10 @@
 NOTES.md
 ========
 
+* 0.9.2
+
+    * Convert _ to - in output file names.
+
 
 * 0.9.1
 
